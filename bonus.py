@@ -53,7 +53,7 @@ def init_driver(block_images=False):
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
 
-    version_main = 137
+    version_main = 139
 
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)  # Important for rendering layout in headless mode
@@ -240,7 +240,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 5
+    max_workers = 11
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(login, credentials)
 

@@ -85,7 +85,7 @@ def init_driver(block_images=True):
     options.add_argument("--no-sandbox")
     options.add_argument("--log-level=3")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless=new")
+    #options.add_argument("--headless=new")
 
     if block_images:
         prefs = {"profile.managed_default_content_settings.images": 2}
@@ -245,33 +245,37 @@ def login(credentials):
         driver.save_screenshot(safe_name)
         log(f"Screenshot saved as {safe_name}", "SUCCESS", username, password)
 
-        # Click withdrawal history tab
+# Click withdrawal history tab
         try:
-            withdrawal_tab = wait.until(
-                EC.element_to_be_clickable((By.XPATH, '//div[@data-qid="withdrawalHistoryTab"]'))
+            payout_tab = wait.until(
+                EC.element_to_be_clickable((By.XPATH, '/html/body/div[5]/div[2]/main/div/div[2]/div[1]/div/div/div/div/div[2]'))
+                # Alternatively: (By.CSS_SELECTOR, 'div.d-flex-ac.egtd-ma__tab.egtd-ma__tab--secondary.egtd-ma__tab--secondary--active')
             )
-            clicked = safe_click(driver, withdrawal_tab, username, password)
+            clicked = safe_click(driver, payout_tab, username, password)
             if clicked:
-                time.sleep(2)
+                log("Clicked 'Изплащания' tab.", "INFO", username, password)
+                time.sleep(3)
                 try:
                     driver.execute_script("""
                         const backdrops = document.querySelectorAll('.modal-backdrop');
                         backdrops.forEach(el => el.remove());
                     """)
-                    log("Removed modal backdrop after clicking withdrawal history tab.", "INFO", username, password)
+                    log("Removed modal backdrop after clicking 'Изплащания' tab.", "INFO", username, password)
                 except Exception as e:
-                    log(f"Failed to remove modal backdrop after clicking withdrawal tab: {e}", "WARNING", username, password)
-
-                safe_name_withdraw = sanitize_filename(f"{username}:{password}_withdraw_history.png")
-                if driver.session_id is not None:
-                    driver.save_screenshot(safe_name_withdraw)
-                    log(f"Screenshot saved as {safe_name_withdraw}", "SUCCESS", username, password)
-                else:
-                    log("Cannot save screenshot: session closed.", "ERROR", username, password)
+                    log(f"Failed to remove modal backdrop after clicking tab: {e}", "WARNING", username, password)
+                time.sleep(1)
             else:
-                log("Skipping withdrawal screenshot because click failed.", "ERROR", username, password)
+                log("Failed to click 'Изплащания' tab.", "ERROR", username, password)
         except Exception as e:
-            log(f"Failed to click 'История на изплащанията' tab: {e}", "ERROR", username, password)
+            log(f"Error clicking 'Изплащания' tab: {e}", "ERROR", username, password)
+
+        # Take screenshot after clicking the tab
+        safe_name = sanitize_filename(f"{username}:{password}_payout_tab.png")
+        if driver.session_id is not None:
+            driver.save_screenshot(safe_name)
+            log(f"Screenshot saved as {safe_name}", "SUCCESS", username, password)
+        else:
+            log("Cannot save screenshot: session closed.", "ERROR", username, password)
 
         # Sound if balance high
         balance_value = float(formatted_amount.replace(',', '.'))
@@ -308,7 +312,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 27
+    max_workers = 1
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(login, credentials)
 

