@@ -192,7 +192,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 15
+    max_workers = 23
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(login, credentials)
 
