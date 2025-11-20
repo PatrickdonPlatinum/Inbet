@@ -104,7 +104,7 @@ def login(credentials):
             
         try:
             login_button = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div/nav/div/div/div[3]/div/button[2]"))
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[2]/div[2]/div/nav/div/div/div[3]/div/button[2]"))
             )
             driver.execute_script("arguments[0].click();", login_button)
         except:
