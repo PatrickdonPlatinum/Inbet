@@ -89,7 +89,7 @@ def init_driver(block_images=True):
     options.add_argument("--no-sandbox")
     options.add_argument("--log-level=3")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless=new")
+    #options.add_argument("--headless=new")
 
     if block_images:
         prefs = {"profile.managed_default_content_settings.images": 2}
@@ -135,7 +135,7 @@ def login(credentials):
                 # Open login window
         try:
             login_button = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div[1]/nav/div/div/div[3]/div/button[2]"))
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div/nav/div/div/div[3]/div/button[2]"))
             )
             login_button.click()
             log("Login window opened.", "INFO", username, password)
@@ -147,7 +147,7 @@ def login(credentials):
         try:
             username_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/form/div[1]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/div[1]/div/div/div/input")
                 )
             )
             username_field.send_keys(username)
@@ -160,7 +160,7 @@ def login(credentials):
         try:
             password_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/form/div[2]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/div[2]/div/div/div/input")
                 )
             )
             password_field.send_keys(password)
@@ -173,7 +173,7 @@ def login(credentials):
         try:
             submit_button = wait.until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/form/button")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/button")
                 )
             )
             submit_button.click()
@@ -323,7 +323,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 7
+    max_workers = 1
     #max_workers = min(multiprocessing.cpu_count(), len(credentials))
     print(f"[INFO] Starting with {max_workers} workers...")
 
