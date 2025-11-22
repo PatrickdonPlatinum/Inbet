@@ -89,7 +89,7 @@ def init_driver(block_images=True):
     options.add_argument("--no-sandbox")
     options.add_argument("--log-level=3")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    #options.add_argument("--headless=new")
+    options.add_argument("--headless=new")
 
     if block_images:
         prefs = {"profile.managed_default_content_settings.images": 2}
@@ -313,7 +313,7 @@ def login(credentials):
 def main():
     global login_page_url, success_logins_file, stop_flag
 
-    credentials_file = 'uniquecredentials.txt'
+    credentials_file = 'check.txt'
     success_logins_file = r"C:\Users\petar\Desktop\inbet\balance_and_bets_sounds.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
 
@@ -323,7 +323,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 1
+    max_workers = 13
     #max_workers = min(multiprocessing.cpu_count(), len(credentials))
     print(f"[INFO] Starting with {max_workers} workers...")
 
