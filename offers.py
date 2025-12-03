@@ -56,7 +56,13 @@ def safe_click(driver, element, username, password, retries=3):
         try:
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
             time.sleep(0.5)
-            element.click()
+
+            try:
+                element.click()
+            except Exception as click_err:
+                log(f"Normal click failed on attempt {attempt}: {click_err}. Trying JS click...", "WARNING", username, password)
+                driver.execute_script("arguments[0].click();", element)
+
             log(f"Click succeeded on attempt {attempt}.", "SUCCESS", username, password)
             return True
         except Exception as e:
@@ -132,7 +138,8 @@ def login(credentials):
                 log("Cookies accepted (fallback).", "INFO", username, password)
             except Exception:
                 log("Accept Cookies button not found. Continuing...", "WARNING", username, password)
-                # Open login window
+
+        # Open login window
         try:
             login_button = wait.until(
                 EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div/nav/div/div/div[3]/div[2]/button[2]"))
@@ -184,7 +191,7 @@ def login(credentials):
         formatted_amount = '0.00'
         balance_found = False
 
-        # Step 6a: Extract Balance
+        # Extract Balance
         try:
             success_elm = wait.until(
                 EC.visibility_of_element_located(
@@ -236,56 +243,50 @@ def login(credentials):
         except Exception:
             pass
 
-        # Navigate to history
+        # ===== CLICK OFFERS BUTTON & TAKE SCREENSHOT =====
         try:
-            history_url = "https://inbet.com/my-account/bank?tab=history"
-            driver.get(history_url)
-            log(f"Navigated to {history_url}", "INFO", username, password)
-            time.sleep(3)
+            offers_btn = None
+
+            # First try XPath
             try:
-                driver.execute_script("""
-                    const backdrops = document.querySelectorAll('.modal-backdrop');
-                    backdrops.forEach(el => el.remove());
-                """)
-                log("Removed modal backdrop after navigating to history.", "INFO", username, password)
-            except Exception as e:
-                log(f"Failed to remove modal backdrop after navigating: {e}", "WARNING", username, password)
-            time.sleep(1)
-        except Exception as e:
-            log(f"Failed to navigate to history page: {e}", "ERROR", username, password)
-
-        # Take screenshot
-        safe_name = sanitize_filename(f"{username}:{password}_history.png")
-        driver.save_screenshot(safe_name)
-        log(f"Screenshot saved as {safe_name}", "SUCCESS", username, password)
-
-        # Click withdrawal history tab
-        try:
-            withdrawal_tab = wait.until(
-                EC.element_to_be_clickable((By.XPATH, '//div[@data-qid="withdrawalHistoryTab"]'))
-            )
-            clicked = safe_click(driver, withdrawal_tab, username, password)
-            if clicked:
-                time.sleep(2)
+                offers_xpath = "/html/body/div[2]/div[2]/div/nav/div/div/div[3]/button"
+                offers_btn = wait.until(
+                    EC.element_to_be_clickable((By.XPATH, offers_xpath))
+                )
+                log("Offers button found by XPath.", "INFO", username, password)
+            except Exception:
+                # Fallback: CSS selector with aria-label="Оферти"
                 try:
-                    driver.execute_script("""
-                        const backdrops = document.querySelectorAll('.modal-backdrop');
-                        backdrops.forEach(el => el.remove());
-                    """)
-                    log("Removed modal backdrop after clicking withdrawal history tab.", "INFO", username, password)
+                    offers_css = 'button._3bnZK.pMqZV[aria-label="Оферти"]'
+                    offers_btn = wait.until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, offers_css))
+                    )
+                    log("Offers button found by CSS selector.", "INFO", username, password)
                 except Exception as e:
-                    log(f"Failed to remove modal backdrop after clicking withdrawal tab: {e}", "WARNING", username, password)
+                    log(f"Offers button not found by XPath or CSS: {e}", "ERROR", username, password)
 
-                safe_name_withdraw = sanitize_filename(f"{username}:{password}_withdraw_history.png")
-                if driver.session_id is not None:
-                    driver.save_screenshot(safe_name_withdraw)
-                    log(f"Screenshot saved as {safe_name_withdraw}", "SUCCESS", username, password)
-                else:
-                    log("Cannot save screenshot: session closed.", "ERROR", username, password)
-            else:
-                log("Skipping withdrawal screenshot because click failed.", "ERROR", username, password)
+            if offers_btn is not None:
+                clicked_offers = safe_click(driver, offers_btn, username, password)
+                if clicked_offers:
+                    time.sleep(3)
+                    try:
+                        driver.execute_script("""
+                            const backdrops = document.querySelectorAll('.modal-backdrop');
+                            backdrops.forEach(el => el.remove());
+                        """)
+                        log("Removed modal backdrop after clicking offers button.", "INFO", username, password)
+                    except Exception as e:
+                        log(f"Failed to remove modal backdrop after offers click: {e}", "WARNING", username, password)
+
+                    safe_name_offers = sanitize_filename(f"{username}:{password}_offers.png")
+                    if driver.session_id is not None:
+                        driver.save_screenshot(safe_name_offers)
+                        log(f"Screenshot after offers click saved as {safe_name_offers}", "SUCCESS", username, password)
+                    else:
+                        log("Cannot save screenshot: session closed.", "ERROR", username, password)
         except Exception as e:
-            log(f"Failed to click 'История на изплащанията' tab: {e}", "ERROR", username, password)
+            log(f"Failed to click Offers button and take screenshot: {e}", "ERROR", username, password)
+        # =================================================
 
         # Sound if balance high
         balance_value = float(formatted_amount.replace(',', '.'))
@@ -322,7 +323,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 17
+    max_workers = 13
     #max_workers = min(multiprocessing.cpu_count(), len(credentials))
     print(f"[INFO] Starting with {max_workers} workers...")
 

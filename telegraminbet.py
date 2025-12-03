@@ -30,7 +30,7 @@ COOKIES_DIR = "profiles"
 LOGIN_URL = "https://www.inbet.com/sports"
 CREDENTIALS_FILE = "unique.txt"
 #CREDENTIALS_FILE = "uniquecredentials1.txt"
-SUCCESS_FILE = r"C:\Users\petar\Desktop\inbet\PatrickAIPlatinum.txt"
+SUCCESS_FILE = r"C:\Inbet\PatrickAIPlatinum.txt"
 # =================================================
 
 stop_flag = False
@@ -70,7 +70,7 @@ def create_driver(id_: int, profile_path: str, headless=True):
     os.makedirs(temp_dir, exist_ok=True)
 
     # Ръчно указваме пътя до сваления ChromeDriver
-    driver_path = r"C:\Users\petar\Desktop\inbet\chromedriver.exe"
+    driver_path = r"C:\Inbet\chromedriver.exe"
     if not os.path.exists(driver_path):
         raise FileNotFoundError(f"ChromeDriver not found at {driver_path}")
 
@@ -122,7 +122,7 @@ def load_cookies(driver, path):
         return False
 
 
-def wait_for(driver, locator, condition, timeout=20):
+def wait_for(driver, locator, condition, timeout=30):
     try:
         return WebDriverWait(driver, timeout).until(condition(locator))
     except:
@@ -199,7 +199,7 @@ def login(credentials, login_page_url, success_logins_file):
         # ✅ Balance alert
         val = float(balance)
         if val > 0.99:
-            winsound.PlaySound(r"C:\Users\petar\Desktop\inbet\inbet.wav",
+            winsound.PlaySound(r"C:\Inbet\inbet.wav",
                                winsound.SND_FILENAME | winsound.SND_ASYNC)
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             send_telegram(username, password, balance, timestamp)

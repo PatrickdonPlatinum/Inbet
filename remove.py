@@ -19,7 +19,7 @@ def main(file1, file2, out_file):
 
 if __name__ == "__main__":
     # change these or pass via sys.argv if you like
-    file1 = "check.txt"
-    file2 = "wrongpass.txt"
+    file1 = "111.txt"
+    file2 = "uniquecredentials.txt"
     out_file = "222.txt"
     main(file1, file2, out_file)
