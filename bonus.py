@@ -51,15 +51,21 @@ def init_driver(block_images=False):
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless=new")
 
+    # 🔇 MUTE BROWSER AUDIO
+    options.add_argument("--mute-audio")  # <- this mutes all Chrome audio
+
     if block_images:
-        prefs = {"profile.managed_default_content_settings.images": 2}
+        prefs = {
+            "profile.managed_default_content_settings.images": 2,
+            # optional: hard-block sound permissions as well
+            "profile.default_content_setting_values.sound": 2
+        }
         options.add_experimental_option("prefs", prefs)
 
     version_main = 142
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)
     return driver
-
 
 def close_popups(driver, timeout=2):
     """Close any modal popup if visible."""
