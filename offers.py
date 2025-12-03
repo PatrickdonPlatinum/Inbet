@@ -243,7 +243,7 @@ def login(credentials):
         except Exception:
             pass
 
-        # ===== CLICK OFFERS BUTTON & TAKE SCREENSHOT =====
+        # ===== CLICK OFFERS BUTTON (JS CLICK) & TAKE SCREENSHOT =====
         try:
             offers_btn = None
 
@@ -265,10 +265,22 @@ def login(credentials):
                 except Exception as e:
                     log(f"Offers button not found by XPath or CSS: {e}", "ERROR", username, password)
 
-            if offers_btn is not None:
-                clicked_offers = safe_click(driver, offers_btn, username, password)
-                if clicked_offers:
+            if offers_btn:
+                try:
+                    # Scroll into view (optional but recommended)
+                    driver.execute_script(
+                        "arguments[0].scrollIntoView({block: 'center', inline: 'center'});",
+                        offers_btn,
+                    )
+
+                    # JS click (javaclick)
+                    driver.execute_script("arguments[0].click();", offers_btn)
+                    log("Offers button clicked via JavaScript.", "SUCCESS", username, password)
+
+                    # Give time for the offers modal/page to load
                     time.sleep(3)
+
+                    # Try to remove any dark modal backdrop that may cover the page
                     try:
                         driver.execute_script("""
                             const backdrops = document.querySelectorAll('.modal-backdrop');
@@ -278,14 +290,19 @@ def login(credentials):
                     except Exception as e:
                         log(f"Failed to remove modal backdrop after offers click: {e}", "WARNING", username, password)
 
+                    # Take screenshot after JS click
                     safe_name_offers = sanitize_filename(f"{username}:{password}_offers.png")
                     if driver.session_id is not None:
                         driver.save_screenshot(safe_name_offers)
                         log(f"Screenshot after offers click saved as {safe_name_offers}", "SUCCESS", username, password)
                     else:
                         log("Cannot save screenshot: session closed.", "ERROR", username, password)
+
+                except Exception as e:
+                    log(f"Failed to click Offers button via JavaScript and take screenshot: {e}", "ERROR", username, password)
+
         except Exception as e:
-            log(f"Failed to click Offers button and take screenshot: {e}", "ERROR", username, password)
+            log(f"Unexpected error in Offers button section: {e}", "ERROR", username, password)
         # =================================================
 
         # Sound if balance high
@@ -323,7 +340,7 @@ def main():
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 13
+    max_workers = 9
     #max_workers = min(multiprocessing.cpu_count(), len(credentials))
     print(f"[INFO] Starting with {max_workers} workers...")
 
