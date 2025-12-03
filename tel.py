@@ -88,7 +88,7 @@ def login(credentials):
     driver = init_driver()
     try:
         driver.get(login_page_url)
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 30)
 
         try:
             allow_all_btn = wait.until(
