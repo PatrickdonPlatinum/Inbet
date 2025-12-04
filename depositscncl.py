@@ -22,6 +22,8 @@ wrongpass_file = r"C:\Inbet\wrongpass.txt"
 init(autoreset=True)
 
 stop_flag = False
+HEADLESS_MODE = True  # <<< will be controlled from main() based on user input
+
 
 def log(message, level="INFO", username=None, password=None):
     color = {
@@ -33,6 +35,7 @@ def log(message, level="INFO", username=None, password=None):
 
     prefix = f"[{username}:{password}] " if username and password else ""
     print(f"{color}{prefix}[{level}] {message}{Style.RESET_ALL}")
+
 
 def emergency_stop_listener():
     global stop_flag
@@ -48,8 +51,10 @@ def emergency_stop_listener():
                 stop_flag = True
                 os._exit(0)
 
+
 def sanitize_filename(text):
     return re.sub(r'[\\/:*?"<>|]', '_', text)
+
 
 def safe_click(driver, element, username, password, retries=3):
     for attempt in range(1, retries + 1):
@@ -77,10 +82,12 @@ def safe_click(driver, element, username, password, retries=3):
     log("Could not click element after retries.", "ERROR", username, password)
     return False
 
+
 def read_credentials(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         credentials = file.readlines()
     return [line.strip().split(':') for line in credentials]
+
 
 def init_driver(block_images=True):
     options = uc.ChromeOptions()
@@ -89,7 +96,10 @@ def init_driver(block_images=True):
     options.add_argument("--no-sandbox")
     options.add_argument("--log-level=3")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--headless=new")
+
+    # <<< HEADLESS CONTROL FROM USER CHOICE >>>
+    if HEADLESS_MODE:
+        options.add_argument("--headless=new")
 
     if block_images:
         prefs = {"profile.managed_default_content_settings.images": 2}
@@ -99,6 +109,7 @@ def init_driver(block_images=True):
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)
     return driver
+
 
 def login(credentials):
     username, password = credentials
@@ -132,7 +143,8 @@ def login(credentials):
                 log("Cookies accepted (fallback).", "INFO", username, password)
             except Exception:
                 log("Accept Cookies button not found. Continuing...", "WARNING", username, password)
-                # Open login window
+
+        # Open login window
         try:
             login_button = wait.until(
                 EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div/nav/div/div/div[3]/div[2]/button[2]"))
@@ -309,8 +321,9 @@ def login(credentials):
     finally:
         driver.quit()
 
+
 def main():
-    global login_page_url, success_logins_file, stop_flag
+    global login_page_url, success_logins_file, stop_flag, HEADLESS_MODE
 
     credentials_file = 'unique.txt'
     success_logins_file = r"C:\Inbet\balance_and_bets_sounds.txt"
@@ -319,15 +332,43 @@ def main():
     login_page_url = "https://inbet.com/sports"
     credentials = read_credentials(credentials_file)
 
+    # ================= USER INPUT: HEADLESS / WORKERS =================
+    # Ask for headless or not
+    headless_input = input("Run browser in headless mode? (y/n, default: y): ").strip().lower()
+    if headless_input == "n":
+        HEADLESS_MODE = False
+        log("Headless mode disabled. Browser windows will be visible.", "INFO")
+    else:
+        HEADLESS_MODE = True
+        log("Headless mode enabled.", "INFO")
+
+    # Ask for workers
+    if credentials:
+        default_workers = min(17, multiprocessing.cpu_count(), len(credentials))
+        workers_input = input(
+            f"How many workers? (1-{len(credentials)}, default: {default_workers}): "
+        ).strip()
+
+        if workers_input.isdigit():
+            max_workers = int(workers_input)
+            if max_workers < 1:
+                max_workers = 1
+            if max_workers > len(credentials):
+                max_workers = len(credentials)
+        else:
+            max_workers = default_workers
+    else:
+        max_workers = 1
+
+    log(f"Using {max_workers} workers.", "INFO")
+    # ================================================================
+
     listener_thread = threading.Thread(target=emergency_stop_listener, daemon=True)
     listener_thread.start()
 
-    max_workers = 17
-    #max_workers = min(multiprocessing.cpu_count(), len(credentials))
-    print(f"[INFO] Starting with {max_workers} workers...")
-
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(lambda cred: login(cred), credentials)
+
 
 if __name__ == "__main__":
     main()
