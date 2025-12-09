@@ -336,7 +336,7 @@ def login(credentials):
 
 def main():
     global login_page_url
-    credentials_file = 'unique.txt'
+    credentials_file = 'png_files.txt'
     login_page_url = "https://www.inbet.com/sports"
     credentials = read_credentials(credentials_file)
 
