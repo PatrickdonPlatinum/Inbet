@@ -334,7 +334,7 @@ def login(credentials):
 def main():
     global login_page_url, success_logins_file, stop_flag, HEADLESS_MODE
 
-    credentials_file = 'unique.txt'
+    credentials_file = 'uniquecredentials.txt'
     success_logins_file = r"C:\Inbet\balance_and_bets_sounds.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
 
