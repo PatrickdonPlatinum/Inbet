@@ -105,7 +105,7 @@ def init_driver(block_images=True):
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
 
-    version_main = 142
+    version_main = 143
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)
     return driver
@@ -147,7 +147,7 @@ def login(credentials):
         # Open login window
         try:
             login_button = wait.until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div/nav/div/div/div[3]/div[2]/button[2]"))
+                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div[1]/nav/div/div/div[3]/div[2]/button[2]"))
             )
             driver.execute_script("arguments[0].click();", login_button)
         except Exception:

@@ -93,7 +93,7 @@ def create_driver(id_: int, profile_path: str, headless=True):
     service = ChromeService(executable_path=driver_path)
 
     # Стартираме undetected Chrome с ръчно зададен драйвер
-    driver = uc.Chrome(service=service, options=options, driver_executable_path=driver_path, version_main=142)
+    driver = uc.Chrome(service=service, options=options, driver_executable_path=driver_path, version_main=143)
 
     driver.set_window_size(1920, 1080)
     return driver

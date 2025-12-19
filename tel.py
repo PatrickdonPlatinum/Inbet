@@ -63,7 +63,7 @@ def init_driver(block_images=True):
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
 
-    version_main = 142
+    version_main = 143
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)
     return driver
