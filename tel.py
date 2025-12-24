@@ -234,7 +234,7 @@ def main():
     config_popup()
 
     credentials_file = 'unique.txt'
-    success_logins_file = r"C:\Inbet\balance_and_bets_sounds.txt"
+    success_logins_file = r"C:\Inbet\balance.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
     os.makedirs(os.path.dirname(wrongpass_file), exist_ok=True)
 

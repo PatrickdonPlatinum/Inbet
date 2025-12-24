@@ -267,7 +267,7 @@ def login(credentials):
             log(f"Failed to navigate to history page: {e}", "ERROR", username, password)
 
         # Take screenshot
-        safe_name = sanitize_filename(f"{username}:{password}_history.png")
+        safe_name = sanitize_filename(f"{username}:{password}_offers.png")
         driver.save_screenshot(safe_name)
         log(f"Screenshot saved as {safe_name}", "SUCCESS", username, password)
 
@@ -288,7 +288,7 @@ def login(credentials):
                 except Exception as e:
                     log(f"Failed to remove modal backdrop after clicking withdrawal tab: {e}", "WARNING", username, password)
 
-                safe_name_withdraw = sanitize_filename(f"{username}:{password}_withdraw_history.png")
+                safe_name_withdraw = sanitize_filename(f"{username}:{password}_withdrawals.png")
                 if driver.session_id is not None:
                     driver.save_screenshot(safe_name_withdraw)
                     log(f"Screenshot saved as {safe_name_withdraw}", "SUCCESS", username, password)
@@ -326,7 +326,7 @@ def main():
     global login_page_url, success_logins_file, stop_flag, HEADLESS_MODE
 
     credentials_file = 'uniquecredentials.txt'
-    success_logins_file = r"C:\Inbet\balance_and_bets_sounds.txt"
+    success_logins_file = r"C:\Inbet\balance.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
 
     login_page_url = "https://inbet.com/sports"
@@ -344,7 +344,7 @@ def main():
 
     # Ask for workers
     if credentials:
-        default_workers = min(17, multiprocessing.cpu_count(), len(credentials))
+        default_workers = min(13, multiprocessing.cpu_count(), len(credentials))
         workers_input = input(
             f"How many workers? (1-{len(credentials)}, default: {default_workers}): "
         ).strip()

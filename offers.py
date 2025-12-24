@@ -157,7 +157,7 @@ def login(credentials):
         try:
             username_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/div/form/div[1]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/div[1]/div/div/div/input")
                 )
             )
             username_field.send_keys(username)
@@ -170,7 +170,7 @@ def login(credentials):
         try:
             password_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/div/form/div[2]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/div[2]/div/div/div/input")
                 )
             )
             password_field.send_keys(password)
@@ -183,7 +183,7 @@ def login(credentials):
         try:
             submit_button = wait.until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/div/form/button")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/button")
                 )
             )
             submit_button.click()
@@ -295,7 +295,7 @@ def login(credentials):
                         log(f"Failed to remove modal backdrop after offers click: {e}", "WARNING", username, password)
 
                     # Take screenshot after JS click
-                    safe_name_offers = sanitize_filename(f"{username}:{password}_offers.png")
+                    safe_name_offers = sanitize_filename(f"{username}_offers.png")
                     if driver.session_id is not None:
                         driver.save_screenshot(safe_name_offers)
                         log(f"Screenshot after offers click saved as {safe_name_offers}", "SUCCESS", username, password)
@@ -335,7 +335,7 @@ def main():
     global login_page_url, success_logins_file, stop_flag, HEADLESS_MODE
 
     credentials_file = 'uniquecredentials.txt'
-    success_logins_file = r"C:\Inbet\balance_and_bets_sounds.txt"
+    success_logins_file = r"C:\Inbet\balance.txt"
     os.makedirs(os.path.dirname(success_logins_file), exist_ok=True)
 
     login_page_url = "https://inbet.com/sports"

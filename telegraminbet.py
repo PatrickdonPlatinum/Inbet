@@ -30,7 +30,7 @@ COOKIES_DIR = "profiles"
 LOGIN_URL = "https://www.inbet.com/sports"
 CREDENTIALS_FILE = "unique.txt"
 #CREDENTIALS_FILE = "uniquecredentials1.txt"
-SUCCESS_FILE = r"C:\Inbet\PatrickAIPlatinum.txt"
+SUCCESS_FILE = r"C:\Inbet\balance.txt"
 # =================================================
 
 stop_flag = False
