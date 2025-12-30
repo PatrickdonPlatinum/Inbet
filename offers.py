@@ -105,7 +105,7 @@ def init_driver(block_images=True):
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
 
-    version_main = 142
+    version_main = 143
     driver = uc.Chrome(options=options, version_main=version_main)
     driver.set_window_size(1920, 1080)
     return driver
@@ -157,7 +157,7 @@ def login(credentials):
         try:
             username_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/div[1]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/div/form/div[1]/div/div/div/input")
                 )
             )
             username_field.send_keys(username)
@@ -170,7 +170,7 @@ def login(credentials):
         try:
             password_field = wait.until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/div[2]/div/div/div/input")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/div/form/div[2]/div/div/div/input")
                 )
             )
             password_field.send_keys(password)
@@ -183,7 +183,7 @@ def login(credentials):
         try:
             submit_button = wait.until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div/div/div/div/form/button")
+                    (By.XPATH, "/html/body/div[3]/div[2]/div[3]/div/div/div/div/div/form/button")
                 )
             )
             submit_button.click()
